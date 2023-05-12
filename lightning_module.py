@@ -86,22 +86,8 @@ class DonutModelPLModule(pl.LightningModule):
 
         return scores
 
-    def validation_epoch_end(self, validation_step_outputs):
-        num_of_loaders = len(self.config.dataset_name_or_paths)
-        if num_of_loaders == 1:
-            validation_step_outputs = [validation_step_outputs]
-        assert len(validation_step_outputs) == num_of_loaders
-        cnt = [0] * num_of_loaders
-        total_metric = [0] * num_of_loaders
-        val_metric = [0] * num_of_loaders
-        for i, results in enumerate(validation_step_outputs):
-            for scores in results:
-                cnt[i] += len(scores)
-                total_metric[i] += np.sum(scores)
-            val_metric[i] = total_metric[i] / cnt[i]
-            val_metric_name = f"val_metric_{i}th_dataset"
-            self.log_dict({val_metric_name: val_metric[i]}, sync_dist=True)
-        self.log_dict({"val_metric": np.sum(total_metric) / np.sum(cnt)}, sync_dist=True)
+    def on_validation_epoch_end(self, validation_step_outputs):
+        pass
 
     def configure_optimizers(self):
 

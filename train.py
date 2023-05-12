@@ -20,7 +20,7 @@ from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 from pytorch_lightning.plugins import CheckpointIO
 from pytorch_lightning.utilities import rank_zero_only
 from sconf import Config
-
+from pytorch_lightning import seed_everything
 from donut import DonutDataset
 from lightning_module import DonutDataPLModule, DonutModelPLModule
 
@@ -52,7 +52,7 @@ def save_config_file(config, path):
 
 
 def train(config):
-    pl.utilities.seed.seed_everything(config.get("seed", 42), workers=True)
+    seed_everything(config.get("seed", 42), workers=True)
 
     model_module = DonutModelPLModule(config)
     data_module = DonutDataPLModule(config)
@@ -113,9 +113,9 @@ def train(config):
 
     custom_ckpt = CustomCheckpointIO()
     trainer = pl.Trainer(
-        resume_from_checkpoint=config.get("resume_from_checkpoint_path", None),
+        #resume_from_checkpoint=config.get("resume_from_checkpoint_path", None),
         num_nodes=config.get("num_nodes", 1),
-        gpus=torch.cuda.device_count(),
+        devices=torch.cuda.device_count(),
         strategy="ddp",
         accelerator="gpu",
         plugins=custom_ckpt,
@@ -127,6 +127,8 @@ def train(config):
         precision=16,
         num_sanity_val_steps=0,
         logger=logger,
+        # accumulate_grad_batches=1,
+        move_metrics_to_cpu=True,
         callbacks=[lr_callback, checkpoint_callback],
     )
 
